@@ -1,0 +1,61 @@
+{
+  "assets": {
+    "uris": {
+      "jre-tar-gz": "{{jre-url}}",
+      "libmesos-bundle-tar-gz": "{{libmesos-bundle-url}}",
+      "scheduler-zip": "{{artifact-dir}}/rabbitmq-scheduler.zip",
+      "bootstrap-zip": "https://s3-eu-west-1.amazonaws.com/cotds-dcos-repo/commons/0.20.1/bootstrap.zip",
+      "executor-zip": "https://s3-eu-west-1.amazonaws.com/cotds-dcos-repo/commons/0.20.1/executor.zip"
+    },
+    "container": {
+      "docker": {
+        "rabbitmq-docker": "sheepkiller/dcos-rabbitmq:3.6.10-0.0.23"
+      }
+    }
+  },
+  "images": {
+    "icon-small": "https://github.com/rabbitmq/rabbitmq-website/blob/master/site/img/rabbitmq_logo_30x30.png?raw=true",
+    "icon-medium": "https://github.com/rabbitmq/rabbitmq-website/blob/master/site/img/rabbitmq_logo_30x30.png?raw=true",
+    "icon-large": "https://github.com/rabbitmq/rabbitmq-website/blob/master/site/img/rabbitmq_logo_30x30.png?raw=true"
+  },
+  "cli": {
+    "binaries": {
+      "darwin": {
+        "x86-64": {
+          "contentHash": [
+            {
+              "algo": "sha256",
+              "value": "{{sha256:dcos-rabbitmq-darwin}}"
+            }
+          ],
+          "kind": "executable",
+          "url": "{{artifact-dir}}/dcos-rabbitmq-darwin"
+        }
+      },
+      "linux": {
+        "x86-64": {
+          "contentHash": [
+            {
+              "algo": "sha256",
+              "value": "{{sha256:dcos-rabbitmq-linux}}"
+            }
+          ],
+          "kind": "executable",
+          "url": "{{artifact-dir}}/dcos-rabbitmq-linux"
+        }
+      },
+      "windows": {
+        "x86-64": {
+          "contentHash": [
+            {
+              "algo": "sha256",
+              "value": "{{sha256:dcos-rabbitmq.exe}}"
+            }
+          ],
+          "kind": "executable",
+          "url": "{{artifact-dir}}/dcos-rabbitmq.exe"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "packagingVersion": "3.0",
+  "minDcosReleaseVersion": "1.8",
+  "name": "rabbitmq",
+  "version": "{{package-version}}",
+  "maintainer": "sheepkiller@cultdeadsheep.org",
+  "description": "RabbitMQ cluster framework. Requires an etcd cluster to work",
+  "selected": false,
+  "framework": true,
+  "tags": ["rabbitmq","messaging"],
+  "postInstallNotes": "DC/OS rabbitmq is being installed",
+  "postUninstallNotes": "DC/OS rabbitmq is being uninstalled."
+}

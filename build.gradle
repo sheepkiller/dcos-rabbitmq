@@ -1,0 +1,67 @@
+
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
+import com.bmuschko.gradle.docker.tasks.image.DockerTagImage
+
+
+group 'com.mesosphere.sdk'
+version '0.0.1-SNAPSHOT'
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.bmuschko:gradle-docker-plugin:3.0.11'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'com.bmuschko.docker-remote-api'
+
+repositories {
+    mavenCentral()
+    maven {
+        url "http://downloads.mesosphere.com/maven/"
+    }
+    maven {
+        url "http://downloads.mesosphere.com/maven-snapshot/"
+    }
+}
+
+ext {
+    junitVer = "4.12"
+    systemRulesVer = "1.16.0"
+    mockitoVer = "1.9.5"
+    dockerImageName = "sheepkiller/dcos-rabbitmq"
+    dockerImageVersion = "3.6.10-0.0.23"
+}
+
+task buildDockerImage(type: DockerBuildImage, dependsOn: distZip) {
+  inputDir = file('src/main/docker/')
+  tag = dockerImageName + ':' + dockerImageVersion
+  noCache = false
+
+}
+
+task dockerPushImage(type: DockerPushImage, dependsOn: buildDockerImage) {
+    imageName = dockerImageName
+    tag = dockerImageVersion
+}
+
+dependencies {
+    compile "mesosphere:scheduler:0.20.1"
+    compile "mesosphere:executor:0.20.1"
+    testCompile "mesosphere:testing:0.20.1"
+}
+
+distributions {
+    main {
+        baseName = 'rabbitmq-scheduler'
+        version = ''
+    }
+}
+
+mainClassName = 'com.mesosphere.sdk.rabbitmq.scheduler.Main'

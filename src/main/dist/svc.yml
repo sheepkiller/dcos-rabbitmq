@@ -1,0 +1,96 @@
+name: {{FRAMEWORK_NAME}}
+scheduler:
+  principal: {{FRAMEWORK_PRINCIPAL}}
+  user: {{FRAMEWORK_USER}}
+
+pods:
+  rabbitmq:
+    count: {{RABBITMQ_RES_COUNT}}
+    uris:
+      - {{BOOTSTRAP_URI}}
+    container:
+      image-name: "{{RABBITMQ_RES_DOCKER_IMAGE}}"
+    placement: {{RABBITMQ_RES_PLACEMENT}}
+    {{#ENABLE_VIRTUAL_NETWORK}}
+    networks:
+      {{VIRTUAL_NETWORK_NAME}}:
+        labels: {{CNI_PLUGIN_LABELS}}
+    {{/ENABLE_VIRTUAL_NETWORK}}
+    resource-sets:
+      nodes:
+        cpus: {{RABBITMQ_RES_CPUS}}
+        memory: {{RABBITMQ_RES_MEM}}
+        ports:
+          epmd:
+            port: 4369
+          amqp-tls:
+            port: 5671
+          amqp:
+            port: {{ RABBITMQ_CFG_NODE_AMQP_PORT }}
+          management:
+            port: {{ RABBITMQ_CFG_MGMT_PORT }}
+          distribution:
+            port: {{ RABBITMQ_CFG_NODE_DIST_PORT }}
+        volumes:
+          mnesia:
+            path: rabbitmq-data
+            type: {{ RABBITMQ_RES_DISK_TYPE}}
+            size: {{ RABBITMQ_RES_DISK }}
+    tasks:
+      node:
+        goal: RUNNING
+        cmd: /usr/local/bin/rabbitmq-wrapper.sh rabbitmq-server
+        resource-set: nodes
+        env:
+          RABBITMQ_DIST_PORT: {{RABBITMQ_CFG_NODE_DIST_PORT}}
+          RABBITMQ_CFG_MGMT_PORT: {{RABBITMQ_CFG_MGMT_PORT}}
+          RABBITMQ_NODE_PORT: {{RABBITMQ_CFG_NODE_AMQP_PORT}}
+          AUTOCLUSTER_TYPE: etcd
+          ETCD_SCHEME: http
+          ETCD_PORT: 8438
+          ETCD_PREFIX: {{FRAMEWORK_NAME}}
+
+          CLUSTER_NAME: dcos-rabbitmq
+          ADMIN_PASSWORD: password
+          RABBITMQ_CFG_ADVANCED_URL: ""
+          TASK_MEM: {{RABBITMQ_RES_MEM}}
+
+        configs:
+          rabbitmq-config:
+            template: "{{CONFIG_TEMPLATE_PATH}}/rabbitmq.config.mustache"
+            dest: rabbitmq.config
+
+      init:
+        goal: FINISHED
+        cmd: ./bootstrap && /usr/local/bin/rabbitmq-wrapper.sh init
+        resource-set: nodes
+        env:
+          RABBITMQ_CFG_ERLANG_COOKIE: {{RABBITMQ_CFG_ERLANG_COOKIE}}
+          RABBITMQ_CFG_ADVANCED_URL: ""
+        configs:
+          rabbitmq-cookie:
+            template: "{{CONFIG_TEMPLATE_PATH}}/dot-erlang-cookie.mustache"
+            dest: .erlang.cookie
+
+      etcd-proxy:
+        goal: RUNNING
+        cpus: 0.1
+        memory: 512
+        env:
+          ETCD_ENDPOINT: {{RABBITMQ_ETCD_ENDPOINT}}
+        cmd: "./bootstrap && \
+              /usr/local/bin/etcd --proxy=on --listen-client-urls=http://${TASK_NAME}.${FRAMEWORK_NAME}.autoip.dcos.thisdcos.directory:${PORT_HTTP_ETCD} --discovery-srv=${ETCD_ENDPOINT}"
+        ports:
+          http-etcd:
+            port: 8438
+
+plans:
+  deploy:
+    strategy: serial
+    phases:
+      node-deploy:
+        strategy: serial
+        pod: rabbitmq
+        steps:
+          - 0: [[init],[etcd-proxy],[node]]
+          - default: [[init],[etcd-proxy],[node]]
