@@ -2,26 +2,30 @@
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
 import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
 import com.bmuschko.gradle.docker.tasks.image.DockerTagImage
-
+import de.undercouch.gradle.tasks.download.Download
 
 group 'com.mesosphere.sdk'
-version '0.0.1-SNAPSHOT'
+version '0.0.2'
 
 buildscript {
     repositories {
         jcenter()
+
     }
 
     dependencies {
         classpath 'com.bmuschko:gradle-docker-plugin:3.0.11'
+        classpath 'de.undercouch:gradle-download-task:3.3.0'
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: 'com.bmuschko.docker-remote-api'
+apply plugin: 'de.undercouch.download'
 
 repositories {
+    jcenter()
     mavenCentral()
     maven {
         url "http://downloads.mesosphere.com/maven/"
@@ -36,7 +40,8 @@ ext {
     systemRulesVer = "1.16.0"
     mockitoVer = "1.9.5"
     dockerImageName = "sheepkiller/dcos-rabbitmq"
-    dockerImageVersion = "3.6.10-0.0.23"
+    dockerImageVersion = "3.7.3-0.0.03"
+    dcosCommonsVersion = '0.40.2'
 }
 
 task buildDockerImage(type: DockerBuildImage, dependsOn: distZip) {
@@ -52,11 +57,25 @@ task dockerPushImage(type: DockerPushImage, dependsOn: buildDockerImage) {
 }
 
 dependencies {
-    compile "mesosphere:scheduler:0.20.1"
-    compile "mesosphere:executor:0.20.1"
-    testCompile "mesosphere:testing:0.20.1"
+    compile "mesosphere:scheduler:$dcosCommonsVersion"
+    compile "mesosphere:executor:$dcosCommonsVersion"
+    testCompile "mesosphere:testing:$dcosCommonsVersion"
 }
 
+
+task TemplateFiles(type: org.gradle.api.tasks.Copy, dependsOn: distZip) {
+  from 'src/main/resources/universe'
+  include '*.json'
+  into 'universe'
+  expand(dockerImageName: dockerImageName, dockerImageVersion: dockerImageVersion, schedulerVersion: version)
+}
+
+task copyFiles(type: org.gradle.api.tasks.Copy, dependsOn: TemplateFiles) {
+    from 'src/main/resources/universe'
+    include '*.mustache'
+    into 'universe'
+
+}
 distributions {
     main {
         baseName = 'rabbitmq-scheduler'
@@ -64,4 +83,24 @@ distributions {
     }
 }
 
+
+task buildDcosCommonsBootstrap(type: Exec) {
+    workingDir "dcos-commons"
+    commandLine "./sdk/bootstrap/build.sh"
+}
+
+task buildDcosCommonsCLI(type: Exec, dependsOn: buildDcosCommonsBootstrap) {
+    workingDir "dcos-commons"
+    commandLine "./sdk/cli/build.sh"
+}
+
+task buildDcosCommonsExecutor (type: Exec) {
+    workingDir "dcos-commons"
+    commandLine './gradlew', ':executor:distZip'
+}
+
+task buildDcosCommonsDeps {
+    dependsOn buildDcosCommonsCLI
+    dependsOn buildDcosCommonsExecutor
+}
 mainClassName = 'com.mesosphere.sdk.rabbitmq.scheduler.Main'

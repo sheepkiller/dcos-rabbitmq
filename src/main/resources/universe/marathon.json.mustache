@@ -3,7 +3,7 @@
   "cpus": 1.0,
   "mem": 1024,
   "instances": 1,
-  "cmd": "export LD_LIBRARY_PATH=$MESOS_SANDBOX/libmesos-bundle/lib:$LD_LIBRARY_PATH; export MESOS_NATIVE_JAVA_LIBRARY=$(ls $MESOS_SANDBOX/libmesos-bundle/lib/libmesos-*.so); export JAVA_HOME=$(ls -d $MESOS_SANDBOX/jre*/); export JAVA_HOME=${JAVA_HOME%/}; export PATH=$(ls -d $JAVA_HOME/bin):$PATH &&  export JAVA_OPTS=\"-Xms256M -Xmx512M -XX:-HeapDumpOnOutOfMemoryError\" &&  ./rabbitmq-scheduler/bin/rabbitmq ./rabbitmq-scheduler/svc.yml",
+  "cmd": "export LD_LIBRARY_PATH=$MESOS_SANDBOX/libmesos-bundle/lib:$LD_LIBRARY_PATH; export MESOS_NATIVE_JAVA_LIBRARY=$(ls $MESOS_SANDBOX/libmesos-bundle/lib/libmesos-*.so); export JAVA_HOME=$(ls -d $MESOS_SANDBOX/jdk*/jre/); export JAVA_HOME=${JAVA_HOME%/}; export PATH=$(ls -d $JAVA_HOME/bin):$PATH && export JAVA_OPTS=\"-Xms256M -Xmx512M -XX:-HeapDumpOnOutOfMemoryError\" && ./bootstrap -resolve=false -template=false &&  ./rabbitmq-scheduler/bin/rabbitmq ./rabbitmq-scheduler/svc.yml",
   "labels": {
     "DCOS_COMMONS_API_VERSION": "v1",
     "DCOS_COMMONS_UNINSTALL": "true",
@@ -21,10 +21,14 @@
   },
   {{/service.secret_name}}
   "env": {
-    "FRAMEWORK_NAME": "{{service.name}}",
-    "SLEEP_DURATION": "{{service.sleep}}",
-    "FRAMEWORK_USER": "{{service.user}}",
-    "FRAMEWORK_PRINCIPAL": "{{service.principal}}",
+    "PACKAGE_NAME": "{{package-name}}",
+    "PACKAGE_VERSION": "{{package-version}}",
+    "PACKAGE_BUILD_TIME_EPOCH_MS": "{{package-build-time-epoch-ms}}",
+    "PACKAGE_BUILD_TIME_STR": "{{package-build-time-str}}",
+    "SERVICE_NAME": "{{service.name}}",
+    "SERVICE_USER": "{{service.user}}",
+    "SERVICE_PRINCIPAL": "{{service.principal}}",
+    "MESOS_API_VERSION": "{{service.mesos_api_version}}",
 
     "RABBITMQ_RES_COUNT": "{{rabbitmq-resources.count}}",
     "RABBITMQ_RES_PLACEMENT": "{{rabbitmq-resources.placement_constraint}}",
@@ -39,12 +43,17 @@
     "RABBITMQ_RES_DISK_TYPE": "{{rabbitmq-resources.disk_type}}",
     "RABBITMQ_RES_DOCKER_IMAGE": "{{ rabbitmq-resources.docker_image }}",
 
+    "RABBITMQ_CFG_NODE_EPMD_PORT": "{{rabbitmq-configuration.epmd_port}}",
     "RABBITMQ_CFG_NODE_AMQP_PORT": "{{rabbitmq-configuration.amqp_port}}",
+    "RABBITMQ_CFG_NODE_AMQP_TLS_PORT": "{{rabbitmq-configuration.amqp_tls_port}}",
+
     "RABBITMQ_CFG_NODE_DIST_PORT": "{{rabbitmq-configuration.dist_port}}",
     "RABBITMQ_CFG_MGMT_PORT": "{{rabbitmq-configuration.mgmt_port}}",
     "RABBITMQ_CFG_ERLANG_COOKIE": "{{rabbitmq-configuration.erlang_cookie}}",
     "RABBITMQ_CFG_CLUSTER_NAME": "{{ rabbitmq-configuration.cluster_name }}",
     "RABBITMQ_ETCD_ENDPOINT": "{{ rabbitmq-configuration.etcd_endpoint }}",
+    "RABBITMQ_ETCD_PROXY_PORT": "{{ rabbitmq-configuration.etcd_proxy_port }}",
+
 
     "JAVA_URI": "{{resource.assets.uris.jre-tar-gz}}",
     "EXECUTOR_URI": "{{resource.assets.uris.executor-zip}}",
@@ -58,6 +67,7 @@
     "CONFIG_TEMPLATE_PATH": "rabbitmq-scheduler"
   },
   "uris": [
+    "{{resource.assets.uris.bootstrap-zip}}",
     "{{resource.assets.uris.jre-tar-gz}}",
     "{{resource.assets.uris.scheduler-zip}}",
     "{{resource.assets.uris.libmesos-bundle-tar-gz}}"

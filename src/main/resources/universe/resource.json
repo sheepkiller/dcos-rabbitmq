@@ -4,12 +4,12 @@
       "jre-tar-gz": "{{jre-url}}",
       "libmesos-bundle-tar-gz": "{{libmesos-bundle-url}}",
       "scheduler-zip": "{{artifact-dir}}/rabbitmq-scheduler.zip",
-      "bootstrap-zip": "https://s3-eu-west-1.amazonaws.com/cotds-dcos-repo/commons/0.20.1/bootstrap.zip",
-      "executor-zip": "https://s3-eu-west-1.amazonaws.com/cotds-dcos-repo/commons/0.20.1/executor.zip"
+      "bootstrap-zip": "{{artifact-dir}}/bootstrap.zip",
+      "executor-zip": "{{artifact-dir}}/executor.zip"
     },
     "container": {
       "docker": {
-        "rabbitmq-docker": "sheepkiller/dcos-rabbitmq:3.6.10-0.0.23"
+        "rabbitmq-docker": "${dockerImageName}:${dockerImageVersion}"
       }
     }
   },
@@ -25,11 +25,11 @@
           "contentHash": [
             {
               "algo": "sha256",
-              "value": "{{sha256:dcos-rabbitmq-darwin}}"
+              "value": "{{sha256:dcos-service-cli-darwin}}"
             }
           ],
           "kind": "executable",
-          "url": "{{artifact-dir}}/dcos-rabbitmq-darwin"
+          "url": "{{artifact-dir}}/dcos-service-cli-darwin"
         }
       },
       "linux": {
@@ -37,11 +37,11 @@
           "contentHash": [
             {
               "algo": "sha256",
-              "value": "{{sha256:dcos-rabbitmq-linux}}"
+              "value": "{{sha256:dcos-service-cli-linux}}"
             }
           ],
           "kind": "executable",
-          "url": "{{artifact-dir}}/dcos-rabbitmq-linux"
+          "url": "{{artifact-dir}}/dcos-service-cli-linux"
         }
       },
       "windows": {
@@ -49,11 +49,11 @@
           "contentHash": [
             {
               "algo": "sha256",
-              "value": "{{sha256:dcos-rabbitmq.exe}}"
+              "value": "{{sha256:dcos-service-cli.exe}}"
             }
           ],
           "kind": "executable",
-          "url": "{{artifact-dir}}/dcos-rabbitmq.exe"
+          "url": "{{artifact-dir}}/dcos-service-cli.exe"
         }
       }
     }

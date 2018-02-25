@@ -1,13 +1,8 @@
-[Test the latest development build] (test_me.md)
+[Test the latest development build](test_me.md)
+
 
 ---
-This rabbitmq README may be used as a starting point for writing a Service Guide for your DC/OS Service.
-
-In particular, the parts in _ALL-CAPS ITALICS_ should be updated to reflect your service.
-
-Many sections are left unfilled, as they depend on how your service works. For example, we leave empty sections for you to describe how users may [Backup and Restore their data](#disaster-recovery) because any persistent service should have a backup option.
-
-# _SERVICENAME_ Service Guide
+# RabbitMQ Service Guide
 
 ## Table of Contents
 
@@ -61,25 +56,15 @@ Many sections are left unfilled, as they depend on how your service works. For e
 <a name="overview"></a>
 # Overview
 
-DC/OS _SERVICENAME_ is an automated service that makes it easy to deploy and manage _SERVICENAME_ on [DC/OS](https://mesosphere.com/product/).
-
-_BRIEF OVERVIEW OF YOUR PRODUCT_
+DC/OS RabbitMQ is an automated service that makes it easy to deploy and manage a RabbitMQ Cluster on [DC/OS](https://mesosphere.com/product/). It requires a pre-existing etcd cluster (v2 or v3). Currently, only deployment is supported. Several features are planned like "advanced configuration", monitoring and backup/restore configuration. Please note that it only bootstraps a cluster. If you need replicated queues you still need to configure them by you own. Please refer to [RabbitMQ Documentation](https://www.rabbitmq.com/clustering.html) for further details about cluster limitations and replicated queues.
 
 <a name="features"></a>
 ## Features
 
 - Single command installation for rapid provisioning
-- CLI for easy management
-- Multiple _SERVICENAME_ clusters sharing a single DC/OS cluster for multi-tenancy
-- Multiple _SERVICENAME_ instances sharing the same hosts for improved utilization
+- Multiple RabbitMQ clusters sharing a single DC/OS cluster for multi-tenancy
 - Placement constraints for fine-grained instance placement
 - Vertical and horizontal for managing capacity
-- Rolling software and configuration updates for runtime maintainence
-- Integrated with Enterprise DC/OS Storage capabilities
-- Integrated with Enterprise DC/OS Networking capabilities
-- Integrated with Enterprise DC/OS Monitoring and Troubleshooting capabilities
-- Integrated with Enterprise DC/OS Security capabilities
-- _OTHER BENEFITS YOUR PRODUCT WITH DC/OS_
 
 
 <a name="quick-start"></a>
@@ -87,7 +72,12 @@ _BRIEF OVERVIEW OF YOUR PRODUCT_
 
 1. Install DC/OS on your cluster. See [the documentation](https://docs.mesosphere.com/latest/administration/installing/) for instructions.
 
-1. If you are using open source DC/OS, install _SERVICENAME_ cluster with the following command from the DC/OS CLI. If you are using Enterprise DC/OS, you may need to follow additional instructions. See the Install and Customize section for more information.
+1. This package requires a running etcd cluster. There a package in DC/OS universe_url
+  ```
+  dcos package install etcd
+  ```
+
+1. If you are using open source DC/OS, install RabbitMQ cluster with the following command from the DC/OS CLI. If you are using Enterprise DC/OS, you may need to follow additional instructions. See the Install and Customize section for more information. Please refer to []
 
 	```
 	dcos package install _PKGNAME_

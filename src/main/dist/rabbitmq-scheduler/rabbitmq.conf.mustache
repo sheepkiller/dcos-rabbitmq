@@ -1,0 +1,26 @@
+
+# remote access for cluster configuration
+loopback_users.guest = false
+
+# logging
+log.file = false
+log.console = true
+log.console.level = info
+
+# Memory seat belt
+vm_memory_high_watermark.absolute = {{RABBITMQ_HIGH_MEMORY_WATERMARK}}
+
+# management
+management.listener.port = {{ RABBITMQ_CFG_MGMT_PORT}}
+management.listener.ssl  = false
+
+
+# Clustering
+#cluster_partition_handling = pause_if_all_down
+#cluster_partition_handling.pause_if_all_down.recover = autoheal
+
+cluster_formation.peer_discovery_backend = rabbit_peer_discovery_etcd
+cluster_formation.etcd.host = {{ _ETCD_HOST }}
+cluster_formation.etcd.port = {{ _ETCD_PORT }}
+cluster_formation.etcd.cluster_name = {{ RABBITMQ_CFG_CLUSTER_NAME }}
+cluster_formation.etcd.key_prefix = {{ _ETCD_PREFIX }}

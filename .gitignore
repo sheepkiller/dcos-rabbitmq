@@ -63,3 +63,6 @@ build-remote.sh
 config-etc.json
 # WIP
 src/main/go
+
+# clone of dcos-commons
+#dcos-commons

@@ -4,7 +4,7 @@ set -eu
 
 SHAREDDIR="${MESOS_SANDBOX}/rabbitmq-data/shared"
 export HOSTNAME="${TASK_NAME}.${FRAMEWORK_HOST}"
-export ETCD_HOST=${HOSTNAME}
+export _ETCD_HOST=${HOSTNAME}
 export RUNNING_UNDER_SYSTEMD=true
 export RABBITMQ_NODENAME="rabbitmq@${HOSTNAME}"
 export RABBITMQ_USE_LONGNAME=true

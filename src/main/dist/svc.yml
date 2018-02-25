@@ -1,16 +1,17 @@
-name: {{FRAMEWORK_NAME}}
+name: {{SERVICE_NAME}}
+web-url: "http://rabbitmq-0-node.{{SERVICE_NAME}}.mesos:{{RABBITMQ_CFG_MGMT_PORT}}"
+
 scheduler:
-  principal: {{FRAMEWORK_PRINCIPAL}}
-  user: {{FRAMEWORK_USER}}
+  principal: {{SERVICE_PRINCIPAL}}
+  user: {{SERVICE_USER}}
 
 pods:
   rabbitmq:
     count: {{RABBITMQ_RES_COUNT}}
     uris:
       - {{BOOTSTRAP_URI}}
-    container:
-      image-name: "{{RABBITMQ_RES_DOCKER_IMAGE}}"
-    placement: {{RABBITMQ_RES_PLACEMENT}}
+    image: "{{RABBITMQ_RES_DOCKER_IMAGE}}"
+    placement: '{{{RABBITMQ_RES_PLACEMENT}}}'
     {{#ENABLE_VIRTUAL_NETWORK}}
     networks:
       {{VIRTUAL_NETWORK_NAME}}:
@@ -22,13 +23,21 @@ pods:
         memory: {{RABBITMQ_RES_MEM}}
         ports:
           epmd:
-            port: 4369
+            port: {{ RABBITMQ_CFG_NODE_EPMD_PORT }}
           amqp-tls:
-            port: 5671
+            port: {{ RABBITMQ_CFG_NODE_AMQP_TLS_PORT }}
           amqp:
             port: {{ RABBITMQ_CFG_NODE_AMQP_PORT }}
+            advertise: true
+            vip:
+              prefix: amqp
+              port: {{ RABBITMQ_CFG_NODE_AMQP_PORT }}
           management:
             port: {{ RABBITMQ_CFG_MGMT_PORT }}
+            advertise: true
+            vip:
+              prefix: management
+              port: {{ RABBITMQ_CFG_MGMT_PORT }}
           distribution:
             port: {{ RABBITMQ_CFG_NODE_DIST_PORT }}
         volumes:
@@ -45,23 +54,25 @@ pods:
           RABBITMQ_DIST_PORT: {{RABBITMQ_CFG_NODE_DIST_PORT}}
           RABBITMQ_CFG_MGMT_PORT: {{RABBITMQ_CFG_MGMT_PORT}}
           RABBITMQ_NODE_PORT: {{RABBITMQ_CFG_NODE_AMQP_PORT}}
-          AUTOCLUSTER_TYPE: etcd
-          ETCD_SCHEME: http
-          ETCD_PORT: 8438
-          ETCD_PREFIX: {{FRAMEWORK_NAME}}
-
-          CLUSTER_NAME: dcos-rabbitmq
+          _ETCD_PREFIX: {{SERVICE_NAME}}
+          # Overridden by wrapper
+          _ETCD_HOST: ""
+          _ETCD_PORT: {{ RABBITMQ_ETCD_PROXY_PORT }}
+          RABBITMQ_CFG_CLUSTER_NAME: {{ RABBITMQ_CFG_CLUSTER_NAME }}
           ADMIN_PASSWORD: password
           RABBITMQ_CFG_ADVANCED_URL: ""
+          RABBITMQ_HIGH_MEMORY_WATERMARK: ""
+
+
           TASK_MEM: {{RABBITMQ_RES_MEM}}
 
         configs:
           rabbitmq-config:
-            template: "{{CONFIG_TEMPLATE_PATH}}/rabbitmq.config.mustache"
-            dest: rabbitmq.config
+            template: "{{CONFIG_TEMPLATE_PATH}}/rabbitmq.conf.mustache"
+            dest: rabbitmq.conf
 
       init:
-        goal: FINISHED
+        goal: ONCE
         cmd: ./bootstrap && /usr/local/bin/rabbitmq-wrapper.sh init
         resource-set: nodes
         env:
@@ -78,8 +89,11 @@ pods:
         memory: 512
         env:
           ETCD_ENDPOINT: {{RABBITMQ_ETCD_ENDPOINT}}
+          ETCD_SCHEME: http
+          ETCD_PORT: {{ RABBITMQ_ETCD_PROXY_PORT }}
+          ETCD_PREFIX: {{SERVICE_NAME}}
         cmd: "./bootstrap && \
-              /usr/local/bin/etcd --proxy=on --listen-client-urls=http://${TASK_NAME}.${FRAMEWORK_NAME}.autoip.dcos.thisdcos.directory:${PORT_HTTP_ETCD} --discovery-srv=${ETCD_ENDPOINT}"
+              /usr/local/bin/etcd --proxy=on --listen-client-urls=${ETCD_SCHEME}://${ETCD_HOST}:${ETCD_PORT} --discovery-srv=${ETCD_ENDPOINT} --data-dir=${MESOS_SANDBOX}/etcd"
         ports:
           http-etcd:
             port: 8438
@@ -93,4 +107,12 @@ plans:
         pod: rabbitmq
         steps:
           - 0: [[init],[etcd-proxy],[node]]
+          - default: [[init],[etcd-proxy],[node]]
+  replace:
+    strategy: serial
+    phases:
+      node-deploy:
+        strategy: serial
+        pod: rabbitmq
+        steps:
           - default: [[init],[etcd-proxy],[node]]
