@@ -61,6 +61,7 @@ tools/*/shakedown_env
 build-clem.sh
 build-remote.sh
 config-etc.json
+release-clem.sh
 # WIP
 src/main/go
 
