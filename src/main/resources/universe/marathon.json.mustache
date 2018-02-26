@@ -21,6 +21,11 @@
   },
   {{/service.secret_name}}
   "env": {
+{{#service.virtual_network_enabled}}
+    "ENABLE_VIRTUAL_NETWORK": "yes",
+    "VIRTUAL_NETWORK_NAME": "{{service.virtual_network_name}}",
+    "VIRTUAL_NETWORK_PLUGIN_LABELS": "{{service.virtual_network_plugin_labels}}",
+{{/service.virtual_network_enabled}}
     "PACKAGE_NAME": "{{package-name}}",
     "PACKAGE_VERSION": "{{package-version}}",
     "PACKAGE_BUILD_TIME_EPOCH_MS": "{{package-build-time-epoch-ms}}",
@@ -29,14 +34,8 @@
     "SERVICE_USER": "{{service.user}}",
     "SERVICE_PRINCIPAL": "{{service.principal}}",
     "MESOS_API_VERSION": "{{service.mesos_api_version}}",
-
     "RABBITMQ_RES_COUNT": "{{rabbitmq-resources.count}}",
     "RABBITMQ_RES_PLACEMENT": "{{rabbitmq-resources.placement_constraint}}",
-    {{#service.virtual_networks}}
-    "ENABLE_VIRTUAL_NETWORK": "yes",
-    "VIRTUAL_NETWORK_NAME": "{{rabbitmq-resources.virtual_network}}",
-    "CNI_PLUGIN_LABELS": "{{rabbitmq-resources.cni_plugin_labels}}",
-    {{/service.virtual_networks}}
     "RABBITMQ_RES_CPUS": "{{rabbitmq-resources.cpus}}",
     "RABBITMQ_RES_MEM": "{{rabbitmq-resources.mem}}",
     "RABBITMQ_RES_DISK": "{{rabbitmq-resources.disk}}",
