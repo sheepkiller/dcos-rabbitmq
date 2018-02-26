@@ -1,13 +1,16 @@
 {
-  "packagingVersion": "3.0",
-  "minDcosReleaseVersion": "1.8",
-  "name": "rabbitmq",
+  "packagingVersion": "4.0",
+  "upgradesFrom": ["{{upgrades-from}}"],
+  "downgradesTo": ["{{downgrades-to}}"],
+  "minDcosReleaseVersion": "1.11",
+  "name": "RabbitMQ",
   "version": "{{package-version}}",
   "maintainer": "sheepkiller@cultdeadsheep.org",
-  "description": "RabbitMQ cluster framework. Requires an etcd cluster to work",
+  "description": "Bootstrap a RabbitMQ cluster.",
   "selected": false,
   "framework": true,
-  "tags": ["rabbitmq","messaging"],
-  "postInstallNotes": "DC/OS rabbitmq is being installed",
-  "postUninstallNotes": "DC/OS rabbitmq is being uninstalled."
+  "tags": ["rabbitmq", "message", "broker"],
+  "preInstallNotes": "This package is currently in alpha stage",
+  "postInstallNotes": "Enjoy !",
+  "postUninstallNotes": "So sad to say good bye. Thanks for testing ! <3"
 }
