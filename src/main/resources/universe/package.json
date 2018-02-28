@@ -3,7 +3,7 @@
   "upgradesFrom": ["{{upgrades-from}}"],
   "downgradesTo": ["{{downgrades-to}}"],
   "minDcosReleaseVersion": "1.11",
-  "name": "RabbitMQ",
+  "name": "rabbitmq",
   "version": "{{package-version}}",
   "maintainer": "sheepkiller@cultdeadsheep.org",
   "description": "Bootstrap a RabbitMQ cluster.",
