@@ -14,7 +14,7 @@ pods:
     placement: '{{{RABBITMQ_RES_PLACEMENT}}}'
     {{#ENABLE_VIRTUAL_NETWORK}}
     networks:
-      {{VIRTUAL_NETWORK_NAME}}:
+    {{VIRTUAL_NETWORK_NAME}}:
         labels: {{CNI_PLUGIN_LABELS}}
     {{/ENABLE_VIRTUAL_NETWORK}}
     resource-sets:
@@ -45,31 +45,60 @@ pods:
             path: rabbitmq-data
             type: {{ RABBITMQ_RES_DISK_TYPE}}
             size: {{ RABBITMQ_RES_DISK }}
+
+      side-cars:
+         cpus: 0.1
+         memory: 512
+
     tasks:
       node:
         goal: RUNNING
         cmd: /usr/local/bin/rabbitmq-wrapper.sh rabbitmq-server
         resource-set: nodes
         env:
+          _ETCD_PREFIX: {{SERVICE_NAME}}
+          _ETCD_HOST:
+          _ETCD_PORT: {{ RABBITMQ_ETCD_PROXY_PORT }}
+
+          RABBITMQ_CFG_CLUSTER_NAME: {{ RABBITMQ_CFG_CLUSTER_NAME }}
           RABBITMQ_DIST_PORT: {{RABBITMQ_CFG_NODE_DIST_PORT}}
           RABBITMQ_CFG_MGMT_PORT: {{RABBITMQ_CFG_MGMT_PORT}}
           RABBITMQ_NODE_PORT: {{RABBITMQ_CFG_NODE_AMQP_PORT}}
-          _ETCD_PREFIX: {{SERVICE_NAME}}
-          # Overridden by wrapper
-          _ETCD_HOST: ""
-          _ETCD_PORT: {{ RABBITMQ_ETCD_PROXY_PORT }}
-          RABBITMQ_CFG_CLUSTER_NAME: {{ RABBITMQ_CFG_CLUSTER_NAME }}
-          ADMIN_PASSWORD: password
-          RABBITMQ_CFG_ADVANCED_URL: ""
-          RABBITMQ_HIGH_MEMORY_WATERMARK: ""
-
-
+          TMP_GUEST_PASSWORD: password
+          RABBITMQ_CFG_ADVANCED_URL:
+          RABBITMQ_HIGH_MEMORY_WATERMARK:
           TASK_MEM: {{RABBITMQ_RES_MEM}}
 
         configs:
           rabbitmq-config:
             template: "{{CONFIG_TEMPLATE_PATH}}/rabbitmq.conf.mustache"
             dest: rabbitmq.conf
+
+        readiness-check:
+            cmd: /usr/local/bin/rabbitmq-wrapper.sh health-check
+            interval: 5
+            delay: 0
+            timeout: 10
+
+      init-cluster:
+        goal: ONCE
+        cmd: ./bootstrap && /usr/local/bin/rabbitmq-wrapper.sh init-cluster
+        resource-set: side-cars
+
+        env:
+          _ETCD_PREFIX: {{SERVICE_NAME}}
+          _ETCD_HOST:
+          _ETCD_PORT: {{ RABBITMQ_ETCD_PROXY_PORT }}
+
+          RABBITMQ_CFG_CLUSTER_NAME: {{ RABBITMQ_CFG_CLUSTER_NAME }}
+          RABBITMQ_DIST_PORT: {{RABBITMQ_CFG_NODE_DIST_PORT}}
+          RABBITMQ_CFG_MGMT_PORT: {{RABBITMQ_CFG_MGMT_PORT}}
+          RABBITMQ_NODE_PORT: {{RABBITMQ_CFG_NODE_AMQP_PORT}}
+          TMP_GUEST_PASSWORD: password
+          RABBITMQ_CFG_ADVANCED_URL:
+          RABBITMQ_HIGH_MEMORY_WATERMARK:
+          TASK_MEM: {{RABBITMQ_RES_MEM}}
+
 
       init:
         goal: ONCE
@@ -92,12 +121,18 @@ pods:
           ETCD_SCHEME: http
           ETCD_PORT: {{ RABBITMQ_ETCD_PROXY_PORT }}
           ETCD_PREFIX: {{SERVICE_NAME}}
-        cmd: "./bootstrap && \
-              /usr/local/bin/etcd --proxy=on --listen-client-urls=${ETCD_SCHEME}://${ETCD_HOST}:${ETCD_PORT} --discovery-srv=${ETCD_ENDPOINT} --data-dir=${MESOS_SANDBOX}/etcd"
+        cmd: |
+          set -e
+          ./bootstrap
+           /usr/local/bin/etcd --proxy=on --listen-client-urls=${ETCD_SCHEME}://${ETCD_HOST}:${ETCD_PORT} --discovery-srv=${ETCD_ENDPOINT} --data-dir=${MESOS_SANDBOX}/etcd
         ports:
           http-etcd:
-            port: 8438
-
+            port: {{ RABBITMQ_ETCD_PROXY_PORT }}
+        readiness-check:
+          cmd: /usr/local/bin/rabbitmq-wrapper.sh health-check-etcd
+          interval: 5
+          delay: 0
+          timeout: 10
 plans:
   deploy:
     strategy: serial
@@ -116,3 +151,11 @@ plans:
         pod: rabbitmq
         steps:
           - default: [[init],[etcd-proxy],[node]]
+  update:
+    strategy: serial
+    phases:
+      node-deploy:
+        strategy: serial
+        pod: rabbitmq
+        steps:
+          - default: [[etcd-proxy],[node]]
