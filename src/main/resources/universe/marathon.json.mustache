@@ -36,7 +36,7 @@
     "FRAMEWORK_LOG_LEVEL": "{{service.log_level}}",
     "MESOS_API_VERSION": "{{service.mesos_api_version}}",
     "RABBITMQ_RES_COUNT": "{{rabbitmq-resources.count}}",
-    "RABBITMQ_RES_PLACEMENT": "{{rabbitmq-resources.placement_constraint}}",
+    "RABBITMQ_SVC_PLACEMENT": "{{service.placement_constraint}}",
     "RABBITMQ_RES_CPUS": "{{rabbitmq-resources.cpus}}",
     "RABBITMQ_RES_MEM": "{{rabbitmq-resources.mem}}",
     "RABBITMQ_RES_DISK": "{{rabbitmq-resources.disk}}",
@@ -51,8 +51,18 @@
     "RABBITMQ_CFG_MGMT_PORT": "{{rabbitmq-configuration.mgmt_port}}",
     "RABBITMQ_CFG_ERLANG_COOKIE": "{{rabbitmq-configuration.erlang_cookie}}",
     "RABBITMQ_CFG_CLUSTER_NAME": "{{ rabbitmq-configuration.cluster_name }}",
-    "RABBITMQ_ETCD_ENDPOINT": "{{ rabbitmq-configuration.etcd_endpoint }}",
-    "RABBITMQ_ETCD_PROXY_PORT": "{{ rabbitmq-configuration.etcd_proxy_port }}",
+
+    "RABBITMQ_ETCD_ENDPOINT": "{{ etcd.etcd_endpoint }}",
+    "RABBITMQ_ETCD_PROXY_PORT": "{{ etcd.etcd_proxy_port }}",
+    "RABBITMQ_ETCD_PROXY_CPUS" : "{{ etcd.cpus }}",
+    "RABBITMQ_ETCD_PROXY_MEM" : "{{ etcd.mem }}",
+    "RABBITMQ_ETCD_PROXY_DISK_SIZE" : "{{ etcd.disk_size }}",
+    "RABBITMQ_ETCD_PROXY_DISK_TYPE" : "{{ etcd.disk_type }}",
+
+    "RABBITMQ_SIDECARS_CPUS": "{{ sidecars-resources.cpus }}",
+    "RABBITMQ_SIDECARS_MEM": "{{ sidecars-resources.mem }}",
+    "RABBITMQ_SHARED_DISK_SIZE": "{{ sidecars-resources.disk_size }}",
+    "RABBITMQ_SHARED_DISK_TYPE": "{{ sidecars-resources.disk_type }}",
 
 
     "JAVA_URI": "{{resource.assets.uris.jre-tar-gz}}",

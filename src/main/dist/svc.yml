@@ -20,8 +20,8 @@ pods:
     volumes:
       shared:
         path: shared
-        type: ROOT
-        size: 10
+        type: {{ RABBITMQ_SHARED_DISK_TYPE }}
+        size: {{ RABBITMQ_SHARED_DISK_SIZE }}
       mnesia:
         path: rabbitmq-data
         type: {{ RABBITMQ_RES_DISK_TYPE}}
@@ -31,6 +31,20 @@ pods:
       nodes:
         cpus: {{RABBITMQ_RES_CPUS}}
         memory: {{RABBITMQ_RES_MEM}}
+        volumes:
+          mnesia:
+            path: rabbitmq-data
+            type: {{ RABBITMQ_RES_DISK_TYPE}}
+            size: {{ RABBITMQ_RES_DISK }}
+      side-cars:
+         cpus: {{ RABBITMQ_SIDECARS_CPUS }}
+         memory: {{ RABBITMQ_SIDECARS_MEM }}
+
+    tasks:
+      node:
+        goal: RUNNING
+        cmd: /usr/local/bin/rabbitmq-wrapper.sh rabbitmq-server
+        resource-set: nodes
         ports:
           epmd:
             port: {{ RABBITMQ_CFG_NODE_EPMD_PORT }}
@@ -50,21 +64,7 @@ pods:
               port: {{ RABBITMQ_CFG_MGMT_PORT }}
           distribution:
             port: {{ RABBITMQ_CFG_NODE_DIST_PORT }}
-        volumes:
-          mnesia:
-            path: rabbitmq-data
-            type: {{ RABBITMQ_RES_DISK_TYPE}}
-            size: {{ RABBITMQ_RES_DISK }}
 
-      side-cars:
-         cpus: 0.1
-         memory: 128
-
-    tasks:
-      node:
-        goal: RUNNING
-        cmd: /usr/local/bin/rabbitmq-wrapper.sh rabbitmq-server
-        resource-set: nodes
         env:
           _ETCD_PREFIX: {{SERVICE_NAME}}
           _ETCD_HOST:
@@ -178,8 +178,8 @@ pods:
 
       etcd-proxy:
         goal: RUNNING
-        cpus: 0.1
-        memory: 512
+        cpus: {{ RABBITMQ_ETCD_PROXY_CPUS }}
+        memory: {{ RABBITMQ_ETCD_PROXY_MEM }}
         env:
           ETCD_ENDPOINT: {{RABBITMQ_ETCD_ENDPOINT}}
           ETCD_SCHEME: http

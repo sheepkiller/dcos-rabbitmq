@@ -67,6 +67,12 @@
             "ALL"
           ],
           "default": "INFO"
+        },
+        "placement_constraint": {
+          "title": "Placement constraint",
+          "description": "Marathon-style placement constraint for nodes. Example: 'hostname:UNIQUE'. By the way since the framework requires specific ports UNIQUE constraints is implicit.",
+          "type": "string",
+          "default": ""
         }
       },
       "required": [
@@ -83,12 +89,6 @@
           "description": "Number of Template pods to run",
           "type": "integer",
           "default": 3
-        },
-        "placement_constraint": {
-          "title": "Placement constraint",
-          "description": "Marathon-style placement constraint for nodes. Example: 'hostname:UNIQUE'. By the way since the framework requires specific ports UNIQUE constraints is implicit.",
-          "type": "string",
-          "default": ""
         },
         "virtual_network": {
           "description": "Name of virtual network to join",
@@ -121,6 +121,7 @@
         "disk_type": {
           "title": "Disk type [ROOT, MOUNT]",
           "description": "Mount volumes require preconfiguration in DC/OS",
+          "type": "string",
           "enum": [
             "ROOT",
             "MOUNT"
@@ -188,6 +189,73 @@
           "description": "The port where rabbitmq will listen",
           "type": "string",
           "default": "joinuswehavecookies"
+        }
+      },
+      "required": [
+        "amqp_port",
+        "dist_port",
+        "mgmt_port",
+        "cluster_name",
+        "erlang_cookie"
+      ]
+    },
+    "sidecars-resources":{
+      "description": "RabbitMQ sidecars resources properties, for admintask",
+      "type": "object",
+      "properties": {
+        "cpus": {
+          "title": "CPU",
+          "description": "CPU",
+          "type": "number",
+          "default": 0.1
+        },
+        "mem": {
+          "title": "MEM",
+          "description": "MEM",
+          "type": "integer",
+          "default": 128
+        },
+        "disk_size": {
+          "title": "size",
+          "description": "",
+          "type": "integer",
+          "default": 10
+        },
+        "disk_type": {
+          "title": "disk type",
+          "description": "disk type",
+          "type": "string",
+          "default": "MOUNT"
+        }
+      }
+    },
+    "etcd":{
+      "description": "etcd-proxy sidecars resources properties, used for node discovery",
+      "type": "object",
+      "properties": {
+        "cpus": {
+          "title":"CPU",
+          "description": "CPU",
+          "type": "number",
+          "default": 0.1
+        },
+        "mem": {
+          "title": "mem",
+          "description":" mem",
+          "type": "integer",
+          "default": 256
+        },
+        "disk_size": {
+          "title": "disk resources",
+          "description":"disk ressource - unused",
+          "type": "integer",
+          "default": 10
+        },
+        "disk_type": {
+          "title": "disk ressource - unused",
+          "description":"disk ressource - unused",
+          "type": "string",
+          "default": "ROOT"
         },
         "etcd_endpoint": {
           "title": "etcd cluster endpoint",
@@ -203,12 +271,10 @@
         }
       },
       "required": [
-        "amqp_port",
-        "dist_port",
-        "mgmt_port",
-        "cluster_name",
-        "erlang_cookie",
-        "etcd_endpoint"
+        "cpus",
+        "mem",
+        "etcd_endpoint",
+        "etcd_proxy_port"
       ]
     }
   }
