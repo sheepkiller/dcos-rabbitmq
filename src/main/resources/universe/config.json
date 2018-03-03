@@ -225,7 +225,7 @@
           "title": "disk type",
           "description": "disk type",
           "type": "string",
-          "default": "MOUNT"
+          "default": "ROOT"
         }
       }
     },
