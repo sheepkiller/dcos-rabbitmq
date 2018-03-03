@@ -40,7 +40,7 @@ ext {
     systemRulesVer = "1.16.0"
     mockitoVer = "1.9.5"
     dockerImageName = "sheepkiller/dcos-rabbitmq"
-    dockerImageVersion = "3.7.3-0.0.09"
+    dockerImageVersion = "3.7.3-0.0.14"
     dcosCommonsVersion = '0.40.3'
 }
 

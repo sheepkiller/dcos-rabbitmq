@@ -17,6 +17,16 @@ pods:
     {{VIRTUAL_NETWORK_NAME}}:
         labels: {{CNI_PLUGIN_LABELS}}
     {{/ENABLE_VIRTUAL_NETWORK}}
+    volumes:
+      shared:
+        path: shared
+        type: ROOT
+        size: 10
+      mnesia:
+        path: rabbitmq-data
+        type: {{ RABBITMQ_RES_DISK_TYPE}}
+        size: {{ RABBITMQ_RES_DISK }}
+
     resource-sets:
       nodes:
         cpus: {{RABBITMQ_RES_CPUS}}
@@ -48,7 +58,7 @@ pods:
 
       side-cars:
          cpus: 0.1
-         memory: 512
+         memory: 128
 
     tasks:
       node:
@@ -71,17 +81,25 @@ pods:
 
         configs:
           rabbitmq-config:
-            template: "{{CONFIG_TEMPLATE_PATH}}/rabbitmq.conf.mustache"
+            template: {{CONFIG_TEMPLATE_PATH}}/rabbitmq.conf.mustache
             dest: rabbitmq.conf
 
         readiness-check:
-            cmd: /usr/local/bin/rabbitmq-wrapper.sh health-check
-            interval: 5
-            delay: 0
-            timeout: 10
+          cmd: /usr/local/bin/rabbitmq-wrapper.sh health-check
+          interval: 5
+          delay: 0
+          timeout: 10
+
+        health-check:
+          cmd: /usr/local/bin/rabbitmq-wrapper.sh health-check
+          interval: 120
+          grace-period: 30
+          max-consecutive-failures: 3
+          delay: 0
+          timeout: 10
 
       init-cluster:
-        goal: ONCE
+        goal: FINISHED
         cmd: ./bootstrap && /usr/local/bin/rabbitmq-wrapper.sh init-cluster
         resource-set: side-cars
 
@@ -99,9 +117,55 @@ pods:
           RABBITMQ_HIGH_MEMORY_WATERMARK:
           TASK_MEM: {{RABBITMQ_RES_MEM}}
 
+      backup-definitions:
+        goal: FINISHED
+        resource-set: side-cars
+        env:
+          RABBITMQ_CFG_MGMT_PORT: {{RABBITMQ_CFG_MGMT_PORT}}
+        cmd: |
+          set -e
+          SCHEME=http
+          curl ${SCHEME}://${USER}:${PASSWORD}@${MESOS_CONTAINER_IP}:${RABBITMQ_CFG_MGMT_PORT}/api/definitions > ${MESOS_SANDBOX}/shared/definitions_${BACKUP_ID}.json
+
+      restore-definitions:
+        goal: FINISHED
+        resource-set: side-cars
+        env:
+          RABBITMQ_CFG_MGMT_PORT: {{RABBITMQ_CFG_MGMT_PORT}}
+        cmd: |
+          set -e
+          SCHEME=http
+          curl -X POST -H "Content-Type: application/json" ${SCHEME}://${USER}:${PASSWORD}@${MESOS_CONTAINER_IP}:${RABBITMQ_CFG_MGMT_PORT}/api/definitions -d@${MESOS_SANDBOX}/shared/definitions_${BACKUP_ID}.json
+
+      upload-definitions-s3:
+        goal: FINISHED
+        resource-set: side-cars
+        cmd: |
+          set -e
+          s3cmd  --access_key=${AWS_ACCESS_KEY} \
+                 --secret_key=${AWS_SECRET_KEY} \
+                 --region=${AWS_REGION} \
+                 put ${MESOS_SANDBOX}/shared/definitions_${BACKUP_ID}.json \
+                 s3://${S3_BUCKET_NAME}/${S3_KEY_PREFIX}/definitions_${BACKUP_ID}.json
+
+      restore-definitions-s3:
+        goal: FINISHED
+        resource-set: side-cars
+        cmd: |
+          set -e
+          s3cmd  --access_key=${AWS_ACCESS_KEY} \
+                 --secret_key=${AWS_SECRET_KEY} \
+                 --region=${AWS_REGION} \
+                 get s3://${S3_BUCKET_NAME}/${S3_KEY_PREFIX}/definitions_${BACKUP_ID}.json \
+                 ${MESOS_SANDBOX}/shared/definitions_${BACKUP_ID}.json
+
+      definitions-cleanup:
+        goal: FINISHED
+        resource-set: side-cars
+        cmd: rm -f ${MESOS_SANDBOX}/shared/definitions_${BACKUP_ID}.json
 
       init:
-        goal: ONCE
+        goal: FINISHED
         cmd: ./bootstrap && /usr/local/bin/rabbitmq-wrapper.sh init
         resource-set: nodes
         env:
@@ -133,6 +197,14 @@ pods:
           interval: 5
           delay: 0
           timeout: 10
+        health-check:
+          cmd: /usr/local/bin/rabbitmq-wrapper.sh health-check-etcd
+          interval: 5
+          grace-period: 30
+          max-consecutive-failures: 3
+          delay: 30
+          timeout: 10
+
 plans:
   deploy:
     strategy: serial
@@ -159,3 +231,42 @@ plans:
         pod: rabbitmq
         steps:
           - default: [[etcd-proxy],[node]]
+
+  backup-definitions-s3:
+    strategy: serial
+    phases:
+      backup-definitions:
+        strategy: serial
+        pod: rabbitmq
+        steps:
+          - 0: [[backup-definitions]]
+      upload-definitions-s3:
+        strategy: serial
+        pod: rabbitmq
+        steps:
+          - 0: [[upload-definitions-s3]]
+      definitions-cleanup:
+        strategy: serial
+        pod: rabbitmq
+        steps:
+          - 0: [[definitions-cleanup]]
+
+  restore-definitions-s3:
+    strategy: serial
+    phases:
+      restore-definitions-s3:
+        strategy: serial
+        pod: rabbitmq
+        steps:
+          - 0: [[restore-definitions-s3]]
+      restore-definition:
+        strategy: serial
+        pod: rabbitmq
+        steps:
+          - 0: [[restore-definitions]]
+      definitions-cleanup:
+        strategy: serial
+        pod: rabbitmq
+        steps:
+          - 0: [[definitions-cleanup]]
+

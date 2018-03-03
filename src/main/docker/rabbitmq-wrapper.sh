@@ -51,7 +51,7 @@ case "$1" in
       ;;
 
   "health-check")
-      gosu rabbitmq rabbitmqctl  list_vhosts > /dev/null  2>&1
+      curl -o /dev/null -Ss -L "http://${MESOS_CONTAINER_IP}:${RABBITMQ_CFG_MGMT_PORT}/api"
       ;;
 
   "health-check-etcd")
