@@ -31,20 +31,6 @@ pods:
       nodes:
         cpus: {{RABBITMQ_RES_CPUS}}
         memory: {{RABBITMQ_RES_MEM}}
-        volumes:
-          mnesia:
-            path: rabbitmq-data
-            type: {{ RABBITMQ_RES_DISK_TYPE}}
-            size: {{ RABBITMQ_RES_DISK }}
-      side-cars:
-         cpus: {{ RABBITMQ_SIDECARS_CPUS }}
-         memory: {{ RABBITMQ_SIDECARS_MEM }}
-
-    tasks:
-      node:
-        goal: RUNNING
-        cmd: /usr/local/bin/rabbitmq-wrapper.sh rabbitmq-server
-        resource-set: nodes
         ports:
           epmd:
             port: {{ RABBITMQ_CFG_NODE_EPMD_PORT }}
@@ -62,6 +48,21 @@ pods:
               port: {{ RABBITMQ_CFG_MGMT_PORT }}
           distribution:
             port: {{ RABBITMQ_CFG_NODE_DIST_PORT }}
+      side-cars:
+         cpus: {{ RABBITMQ_SIDECARS_CPUS }}
+         memory: {{ RABBITMQ_SIDECARS_MEM }}
+
+    tasks:
+      node:
+        goal: RUNNING
+        cmd: |
+          set -e
+
+          ./bootstrap
+          /usr/local/bin/rabbitmq-wrapper.sh init
+          /usr/local/bin/rabbitmq-wrapper.sh rabbitmq-server
+        resource-set: nodes
+
 
         env:
           _ETCD_PREFIX: {{SERVICE_NAME}}
@@ -72,6 +73,8 @@ pods:
           RABBITMQ_DIST_PORT: {{RABBITMQ_CFG_NODE_DIST_PORT}}
           RABBITMQ_CFG_MGMT_PORT: {{RABBITMQ_CFG_MGMT_PORT}}
           RABBITMQ_NODE_PORT: {{RABBITMQ_CFG_NODE_AMQP_PORT}}
+          RABBITMQ_CFG_ERLANG_COOKIE: {{RABBITMQ_CFG_ERLANG_COOKIE}}
+
           TMP_GUEST_PASSWORD: password
           RABBITMQ_CFG_ADVANCED_URL:
           RABBITMQ_HIGH_MEMORY_WATERMARK:
@@ -81,6 +84,9 @@ pods:
           rabbitmq-config:
             template: {{CONFIG_TEMPLATE_PATH}}/rabbitmq.conf.mustache
             dest: rabbitmq.conf
+          rabbitmq-cookie:
+            template: "{{CONFIG_TEMPLATE_PATH}}/dot-erlang-cookie.mustache"
+            dest: .erlang.cookie
 
         readiness-check:
           cmd: /usr/local/bin/rabbitmq-wrapper.sh health-check
@@ -95,25 +101,6 @@ pods:
           max-consecutive-failures: 3
           delay: 0
           timeout: 10
-
-      init-cluster:
-        goal: FINISHED
-        cmd: ./bootstrap && /usr/local/bin/rabbitmq-wrapper.sh init-cluster
-        resource-set: side-cars
-
-        env:
-          _ETCD_PREFIX: {{SERVICE_NAME}}
-          _ETCD_HOST:
-          _ETCD_PORT: {{ RABBITMQ_ETCD_PROXY_PORT }}
-
-          RABBITMQ_CFG_CLUSTER_NAME: {{ RABBITMQ_CFG_CLUSTER_NAME }}
-          RABBITMQ_DIST_PORT: {{RABBITMQ_CFG_NODE_DIST_PORT}}
-          RABBITMQ_CFG_MGMT_PORT: {{RABBITMQ_CFG_MGMT_PORT}}
-          RABBITMQ_NODE_PORT: {{RABBITMQ_CFG_NODE_AMQP_PORT}}
-          TMP_GUEST_PASSWORD: password
-          RABBITMQ_CFG_ADVANCED_URL:
-          RABBITMQ_HIGH_MEMORY_WATERMARK:
-          TASK_MEM: {{RABBITMQ_RES_MEM}}
 
       backup-definitions:
         goal: FINISHED
@@ -162,18 +149,6 @@ pods:
         resource-set: side-cars
         cmd: rm -f ${MESOS_SANDBOX}/shared/definitions_${BACKUP_ID}.json
 
-      init:
-        goal: FINISHED
-        cmd: ./bootstrap && /usr/local/bin/rabbitmq-wrapper.sh init
-        resource-set: nodes
-        env:
-          RABBITMQ_CFG_ERLANG_COOKIE: {{RABBITMQ_CFG_ERLANG_COOKIE}}
-          RABBITMQ_CFG_ADVANCED_URL: ""
-        configs:
-          rabbitmq-cookie:
-            template: "{{CONFIG_TEMPLATE_PATH}}/dot-erlang-cookie.mustache"
-            dest: .erlang.cookie
-
       etcd-proxy:
         goal: RUNNING
         cpus: {{ RABBITMQ_ETCD_PROXY_CPUS }}
@@ -185,7 +160,7 @@ pods:
           ETCD_PREFIX: {{SERVICE_NAME}}
         cmd: |
           set -e
-          ./bootstrap
+          ./bootstrap -resolve=false
            /usr/local/bin/etcd --proxy=on --listen-client-urls=${ETCD_SCHEME}://${ETCD_HOST}:${ETCD_PORT} --discovery-srv=${ETCD_ENDPOINT} --data-dir=${MESOS_SANDBOX}/etcd
         ports:
           http-etcd:
@@ -211,8 +186,8 @@ plans:
         strategy: serial
         pod: rabbitmq
         steps:
-          - 0: [[init],[etcd-proxy],[node]]
-          - default: [[init],[etcd-proxy],[node]]
+          - 0: [[etcd-proxy],[node]]
+          - default: [[etcd-proxy],[node]]
   replace:
     strategy: serial
     phases:
@@ -220,7 +195,7 @@ plans:
         strategy: serial
         pod: rabbitmq
         steps:
-          - default: [[init],[etcd-proxy],[node]]
+          - default: [[etcd-proxy],[node]]
   update:
     strategy: serial
     phases:

@@ -37,7 +37,7 @@ load_shared_env() {
 case "$1" in
   *rabbitmq*)
       load_shared_env
-      "${MESOS_SANDBOX}/bootstrap"
+      "${MESOS_SANDBOX}/bootstrap" -resolve=false
       exec gosu rabbitmq "$@"
       ;;
   "init")

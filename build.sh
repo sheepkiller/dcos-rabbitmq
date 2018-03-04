@@ -20,5 +20,5 @@ ${FRAMEWORK_DIR}/tools/build_package.sh \
     -a "$DCOS_COMMONS_SDK_DIR/cli/dcos-service-cli.exe" \
     -a "$DCOS_COMMONS_SDK_DIR/bootstrap/bootstrap.zip" \
     -a "$DCOS_COMMONS_SDK_DIR/executor/build/distributions/executor.zip" \
-    aws
+    ${1:-aws}
 
