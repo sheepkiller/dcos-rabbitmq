@@ -1,7 +1,9 @@
 [Test the latest development build](test_me.md)
 
-
 ---
+⚠️  tested on DC/OS CE only -- neither secrets, nor TLS are supported ⚠️
+---
+
 # RabbitMQ Service Guide
 
 ## Table of Contents
@@ -55,11 +57,8 @@ DC/OS RabbitMQ is an automated service that makes it easy to deploy and manage a
       "management"
     ]
     
-	dcos _PKGNAME_ endpoints _ENDPOINT_
-	{
-	  "address": ["10.0.3.156:_PORT_", "10.0.3.84:_PORT_"],
-	  "dns": ["_POD_-0._PKGNAME_.mesos:_PORT_", "_POD_-1._PKGNAME_.mesos:_PORT_", "_POD_-2._PKGNAME_.mesos:_PORT_]
-	}
+	dcos rabbitmq endpoints amqp
+
 	```
 
   1. _SIMPLE EXAMPLE OF HOW TO CONNECT A CLIENT AND INTERACT WITH YOUR PRODUCT (E.G., WRITE DATE, READ DATA)._

@@ -38,12 +38,6 @@
           "type": "string",
           "default": ""
         },
-        "secret_name": {
-          "title": "Credential secret name (optional)",
-          "description": "Name of the Secret Store credentials to use for DC/OS service authentication. This should be left empty unless service authentication is needed.",
-          "type": "string",
-          "default": ""
-        },
         "mesos_api_version": {
           "description": "Configures the Mesos API version to use. Possible values: V0 (non-HTTP), V1 (HTTP)",
           "type": "string",
@@ -89,16 +83,6 @@
           "description": "Number of Template pods to run",
           "type": "integer",
           "default": 3
-        },
-        "virtual_network": {
-          "description": "Name of virtual network to join",
-          "type": "string",
-          "default": "dcos"
-        },
-        "cni_plugin_labels": {
-          "description": "Labels to pass to CNI plugin. Comma-seperated key:value pairs. For example [k_0:v_0,k_1:v_1,...,k_n:v_n]",
-          "type": "string",
-          "default": ""
         },
         "cpus": {
           "title": "CPU count",
@@ -159,12 +143,6 @@
           "description": "The port where rabbitmq will listen for processing messages",
           "type": "integer",
           "default": 5672
-        },
-        "amqp_tls_port": {
-          "title": "AMQP TLS port",
-          "description": "The port where rabbitmq will listen for processing messages",
-          "type": "integer",
-          "default": 5671
         },
         "dist_port": {
           "title": "AMQP port",

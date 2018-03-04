@@ -48,8 +48,6 @@ pods:
         ports:
           epmd:
             port: {{ RABBITMQ_CFG_NODE_EPMD_PORT }}
-          amqp-tls:
-            port: {{ RABBITMQ_CFG_NODE_AMQP_TLS_PORT }}
           amqp:
             port: {{ RABBITMQ_CFG_NODE_AMQP_PORT }}
             advertise: true
