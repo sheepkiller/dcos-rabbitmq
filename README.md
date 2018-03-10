@@ -49,17 +49,45 @@ DC/OS RabbitMQ is an automated service that makes it easy to deploy and manage a
 
 1. The service will now deploy with a default configuration. You can monitor its deployment from the Services tab of the DC/OS web interface.
 
-1. Connect a client to _rabbitmq_.
-	```
-	dcos rabbitmq endpoints
+2. Now you have 3 pods running etcd-proxy and rabbitmq server. Cluster should be up by now. The service service expose two endpoints per node : amqp, for messaging, and management, to access rabbitmq web console and its API. We also advertise a load balanced VIP for each endpoints.
+
+```
+	$ dcos rabbitmq endpoints
     [
       "amqp",
       "management"
     ]
-    
-	dcos rabbitmq endpoints amqp
 
-	```
+	$ dcos rabbitmq endpoints amqp
+    {
+      "address": [
+        "192.168.100.27:5672",
+        "192.168.100.30:5672",
+        "192.168.100.8:5672"
+      ],
+      "dns": [
+        "rabbitmq-0-node.rabbitmq.autoip.dcos.thisdcos.directory:5672",
+        "rabbitmq-1-node.rabbitmq.autoip.dcos.thisdcos.directory:5672",
+        "rabbitmq-2-node.rabbitmq.autoip.dcos.thisdcos.directory:5672"
+      ],
+      "vip": "amqp.rabbitmq.l4lb.thisdcos.directory:5672"
+    }
 
-  1. _SIMPLE EXAMPLE OF HOW TO CONNECT A CLIENT AND INTERACT WITH YOUR PRODUCT (E.G., WRITE DATE, READ DATA)._
+  $ dcos rabbitmq endpoints management
+    {
+      "address": [
+        "192.168.100.27:15672",
+        "192.168.100.30:15672",
+        "192.168.100.8:15672"
+      ],
+      "dns": [
+        "rabbitmq-0-node.rabbitmq.autoip.dcos.thisdcos.directory:15672",
+        "rabbitmq-1-node.rabbitmq.autoip.dcos.thisdcos.directory:15672",
+        "rabbitmq-2-node.rabbitmq.autoip.dcos.thisdcos.directory:15672"
+      ],
+      "vip": "management.rabbitmq.l4lb.thisdcos.directory:15672"
+    }
 
+```
+
+  3. Now connect
