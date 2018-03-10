@@ -1,4 +1,4 @@
-FROM rabbitmq:3.7.3-management
+FROM rabbitmq:3.7.4-management
 
 ENV  ETCD_BIN_VERSION=2.2.1
 
