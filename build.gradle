@@ -41,7 +41,7 @@ ext {
     mockitoVer = "1.9.5"
     dockerImageName = "sheepkiller/dcos-rabbitmq"
     dockerImageVersion = "3.7.4-0.0.01"
-    dcosCommonsVersion = '0.40.3'
+    dcosCommonsVersion = '0.40.5'
 }
 
 task buildDockerImage(type: DockerBuildImage, dependsOn: distZip) {
